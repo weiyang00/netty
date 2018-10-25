@@ -6,6 +6,9 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+
+import java.util.Scanner;
+
 /**
  * netty客户端 . <br>
  *
@@ -22,6 +25,14 @@ public class NettyClient {
      * 端口号
      */
     private int port;
+
+    /**
+     * 客户端昵称
+     */
+    private String name = "client1";
+
+    private static String USER_EXIST = "system message: user exist, please change a name";
+    private static String USER_CONTENT_SPILIT = "#@#";
 
     /**
      * 构造函数
@@ -41,15 +52,23 @@ public class NettyClient {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap();
-            bootstrap.group(group).channel(NioSocketChannel.class);
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(group);
             bootstrap.option(ChannelOption.TCP_NODELAY, true);
             // bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
             bootstrap.handler(new NettyClientInitializer());
             Channel channel = bootstrap.connect(host, port).sync().channel();
-            // 发送json字符串
-            String msg = "{\"name\":\"admin\",\"age\":27}\n";
-            channel.writeAndFlush(msg);
-            channel.closeFuture().sync();
+
+            //在主线程中 从键盘读取数据输入到服务器端
+            Scanner scan = new Scanner(System.in);
+
+            while (scan.hasNextLine()) {
+                String line = scan.nextLine();
+                System.out.println( line);
+                // 向服务端server 发送信息
+                channel.writeAndFlush(line + "\n");
+//                channel.closeFuture().sync();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
